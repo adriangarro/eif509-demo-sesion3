@@ -1,0 +1,49 @@
+// IMPORTANTE (Flyway 10.x): el soporte de PostgreSQL va en el classpath del
+// buildscript, no solo en 'dependencies'. Sin esto, ./gradlew flywayMigrate
+// falla con "Unsupported Database: PostgreSQL 16.x".
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'org.flywaydb:flyway-database-postgresql:10.17.0'
+        classpath 'org.postgresql:postgresql:42.7.3'
+    }
+}
+
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.3.2'
+    id 'io.spring.dependency-management' version '1.1.6'
+    id 'org.flywaydb.flyway' version '10.17.0'
+}
+
+group = 'cr.una.eif509'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.flywaydb:flyway-database-postgresql'
+    runtimeOnly 'org.postgresql:postgresql'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+flyway {
+    url = 'jdbc:postgresql://localhost:5432/eif509'
+    user = 'dev'
+    password = 'dev'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
