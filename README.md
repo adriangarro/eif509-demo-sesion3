@@ -62,51 +62,44 @@ No hace falta instalar Gradle (el proyecto trae `gradlew`) ni psql
    PostgreSQL ya queda descargada y Gradle deja las dependencias en caché
    (la primera corrida tarda ~2 min bajando todo; después, segundos).
 
-## Importante: cómo difiere este repo de la demo en vivo
+## Cómo correr la demo (guion de la clase)
 
-En la demo en vivo, V2 se escribe **después** de la primera migración, así que
-`flywayMigrate` corre dos veces y aplica una migración cada vez.
-
-**Este repo ya trae V1 y V2 juntas**, así que la primera corrida de
-`flywayMigrate` aplica las dos de una vez. Para replicar el guion exacto de la
-clase, apartá V2 antes de empezar:
-
-```bash
-mv src/main/resources/db/migration/V2__datos_semilla.sql /tmp/
-```
-
-y devolvela en el paso 4:
-
-```bash
-mv /tmp/V2__datos_semilla.sql src/main/resources/db/migration/
-```
-
-Si no te importa el guion (solo querés ver todo funcionando), ignorá esta
-sección y seguí los pasos: simplemente vas a ver los datos semilla desde el
-paso 3, y el paso 4 va a decir `No migration necessary`.
-
-## Cómo correr la demo completa
+En la demo en vivo, V2 se escribe **después** de la primera migración, para
+que `flywayMigrate` corra dos veces y aplique una migración cada vez. Como
+este repo ya trae V1 y V2 juntas, el guion aparta V2 al inicio y la devuelve
+a mitad de demo — así se replica exactamente el efecto de la clase:
 
 ```bash
 # 0. Si ya corriste la demo antes, arrancá desde cero:
 docker compose down -v   # borra el volumen: la base queda vacía
 
-# 1. Levantar PostgreSQL 16
+# 1. Apartar V2 (en la demo en vivo este archivo todavía no existe)
+mv src/main/resources/db/migration/V2__datos_semilla.sql /tmp/
+
+# 2. Levantar PostgreSQL 16
 docker compose up -d
 docker ps          # verificar que el contenedor está vivo
 
-# 2. Aplicar la primera migración (V1: esquema)
+# 3. Aplicar la primera migración (V1: esquema)
 ./gradlew flywayMigrate
 
-# 3. Verificar con psql (o DBeaver: localhost:5432, eif509 / dev / dev)
+# 4. Verificar con psql (o DBeaver: localhost:5432, eif509 / dev / dev)
+#    Las tablas existen pero cliente está vacía: solo corrió V1
 docker compose exec db psql -U dev -d eif509 -c '\dt'
 docker compose exec db psql -U dev -d eif509 -c 'SELECT * FROM cliente;'
 
-# 4. Aplicar V2 (datos semilla): Flyway detecta que V1 ya corrió
-#    y ejecuta solo lo que falta
+# 5. "Escribir" V2: devolver el archivo de datos semilla
+mv /tmp/V2__datos_semilla.sql src/main/resources/db/migration/
+
+# 6. Migrar de nuevo: Flyway detecta que V1 ya corrió y aplica solo V2
 ./gradlew flywayMigrate
+docker compose exec db psql -U dev -d eif509 -c 'SELECT * FROM cliente;'
 docker compose exec db psql -U dev -d eif509 -c 'SELECT * FROM pedido;'
 ```
+
+> **Atajo**: si solo querés comprobar que todo funciona (sin replicar el
+> guion), saltate los pasos 1 y 5. El primer `flywayMigrate` aplica V1 y V2
+> juntas, y el segundo solo dice `No migration necessary`.
 
 Momento wow — mostrar la tabla de historial de Flyway:
 
