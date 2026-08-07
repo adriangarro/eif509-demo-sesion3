@@ -6,9 +6,55 @@ Repositorio de respaldo de la demo en vivo: **de cero a una base de datos versio
 - PostgreSQL 16 en Docker Compose
 - Migraciones con Flyway (`V1__esquema_inicial.sql`, `V2__datos_semilla.sql`)
 
+## Requisitos previos
+
+1. **Docker Desktop corriendo** (ícono en verde). Es el error #1 de estas demos.
+2. **Java 21.** Verificá con `java -version`. Si no está instalado (macOS):
+
+   ```bash
+   brew install openjdk@21
+   ```
+
+   Y en la terminal donde vas a correr la demo (o en tu `~/.zshrc`):
+
+   ```bash
+   export JAVA_HOME=$(/usr/libexec/java_home -v 21)
+   ```
+
+   Sin esto, `./gradlew` falla con `Unable to locate a Java Runtime`.
+3. **Antes de clase, corré la demo completa una vez.** Así la imagen de
+   PostgreSQL ya queda descargada y Gradle deja las dependencias en caché
+   (la primera corrida tarda ~2 min bajando todo; después, segundos).
+
+## Importante: cómo difiere este repo de la demo en vivo
+
+En la demo en vivo, V2 se escribe **después** de la primera migración, así que
+`flywayMigrate` corre dos veces y aplica una migración cada vez.
+
+**Este repo ya trae V1 y V2 juntas**, así que la primera corrida de
+`flywayMigrate` aplica las dos de una vez. Para replicar el guion exacto de la
+clase, apartá V2 antes de empezar:
+
+```bash
+mv src/main/resources/db/migration/V2__datos_semilla.sql /tmp/
+```
+
+y devolvela en el paso 4:
+
+```bash
+mv /tmp/V2__datos_semilla.sql src/main/resources/db/migration/
+```
+
+Si no te importa el guion (solo querés ver todo funcionando), ignorá esta
+sección y seguí los pasos: simplemente vas a ver los datos semilla desde el
+paso 3, y el paso 4 va a decir `No migration necessary`.
+
 ## Cómo correr la demo completa
 
 ```bash
+# 0. Si ya corriste la demo antes, arrancá desde cero:
+docker compose down -v   # borra el volumen: la base queda vacía
+
 # 1. Levantar PostgreSQL 16
 docker compose up -d
 docker ps          # verificar que el contenedor está vivo
@@ -20,8 +66,8 @@ docker ps          # verificar que el contenedor está vivo
 docker compose exec db psql -U dev -d eif509 -c '\dt'
 docker compose exec db psql -U dev -d eif509 -c 'SELECT * FROM cliente;'
 
-# 4. V2 ya está en el repo: al correr flywayMigrate de nuevo,
-#    Flyway detecta que V1 ya se aplicó y ejecuta solo V2
+# 4. Aplicar V2 (datos semilla): Flyway detecta que V1 ya corrió
+#    y ejecuta solo lo que falta
 ./gradlew flywayMigrate
 docker compose exec db psql -U dev -d eif509 -c 'SELECT * FROM pedido;'
 ```
@@ -32,7 +78,8 @@ Momento wow — mostrar la tabla de historial de Flyway:
 docker compose exec db psql -U dev -d eif509 -c 'SELECT version, description, installed_on FROM flyway_schema_history;'
 ```
 
-Y que las reglas protegen los datos aunque la app falle:
+Y que las reglas protegen los datos aunque la app falle (ambos comandos
+**deben dar ERROR** — ese es el punto):
 
 ```bash
 # FK: rechaza pedido de cliente inexistente
@@ -54,6 +101,7 @@ falla con `Unsupported Database: PostgreSQL 16.x`.
 | Problema | Qué hacer |
 |---|---|
 | `Cannot connect to the Docker daemon` | Docker Desktop no está corriendo. Abrirlo y esperar el ícono verde. |
+| `Unable to locate a Java Runtime` | Falta Java o `JAVA_HOME`. Ver «Requisitos previos». |
 | Puerto 5432 ocupado | Cambiar a `"5433:5432"` en el compose y `localhost:5433` en la URL de Flyway. |
 | Sin internet para bajar la imagen | Este repo ya clonado + imagen descargada de previo (`docker compose pull`). |
 | `migration checksum mismatch` | Se editó una V ya aplicada. En dev: `docker compose down -v` y migrar de cero. |
