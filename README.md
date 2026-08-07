@@ -8,20 +8,42 @@ Repositorio de respaldo de la demo en vivo: **de cero a una base de datos versio
 
 ## Requisitos previos
 
+### Dependencias (macOS con Homebrew)
+
+Si no tenés Homebrew, instalalo primero ([brew.sh](https://brew.sh)):
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+Luego las dependencias de la demo:
+
+```bash
+# Obligatorias
+brew install --cask docker-desktop   # Docker Desktop (contenedor de PostgreSQL)
+brew install openjdk@21              # Java 21 (lo pide el toolchain de Gradle)
+
+# Opcionales
+brew install --cask dbeaver-community   # DBeaver, para mostrar las tablas con GUI
+brew install gh                         # GitHub CLI, solo si vas a publicar tu propio repo
+```
+
+No hace falta instalar Gradle (el proyecto trae `gradlew`) ni psql
+(se usa el que viene dentro del contenedor, vía `docker compose exec`).
+
+### Checklist antes de correr
+
 1. **Docker Desktop corriendo** (ícono en verde). Es el error #1 de estas demos.
-2. **Java 21.** Verificá con `java -version`. Si no está instalado (macOS):
-
-   ```bash
-   brew install openjdk@21
-   ```
-
-   Y en la terminal donde vas a correr la demo (o en tu `~/.zshrc`):
+   Después de instalarlo, abrilo una vez desde Aplicaciones para que arranque el daemon.
+2. **`JAVA_HOME` apuntando a Java 21.** En la terminal donde vas a correr la
+   demo (o en tu `~/.zshrc`):
 
    ```bash
    export JAVA_HOME=$(/usr/libexec/java_home -v 21)
    ```
 
-   Sin esto, `./gradlew` falla con `Unable to locate a Java Runtime`.
+   Verificá con `java -version`. Sin esto, `./gradlew` falla con
+   `Unable to locate a Java Runtime`.
 3. **Antes de clase, corré la demo completa una vez.** Así la imagen de
    PostgreSQL ya queda descargada y Gradle deja las dependencias en caché
    (la primera corrida tarda ~2 min bajando todo; después, segundos).
