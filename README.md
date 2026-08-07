@@ -35,15 +35,29 @@ No hace falta instalar Gradle (el proyecto trae `gradlew`) ni psql
 
 1. **Docker Desktop corriendo** (ícono en verde). Es el error #1 de estas demos.
    Después de instalarlo, abrilo una vez desde Aplicaciones para que arranque el daemon.
-2. **`JAVA_HOME` apuntando a Java 21.** En la terminal donde vas a correr la
-   demo (o en tu `~/.zshrc`):
+2. **`JAVA_HOME` apuntando a Java 21.** Ojo: el JDK de Homebrew no se
+   registra solo en macOS, así que `/usr/libexec/java_home` no lo encuentra
+   de fábrica. Registralo una única vez (pide contraseña):
+
+   ```bash
+   sudo ln -sfn /opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-21.jdk
+   ```
+
+   Y a partir de ahí, en la terminal donde vas a correr la demo
+   (o en tu `~/.zshrc`):
 
    ```bash
    export JAVA_HOME=$(/usr/libexec/java_home -v 21)
    ```
 
-   Verificá con `java -version`. Sin esto, `./gradlew` falla con
-   `Unable to locate a Java Runtime`.
+   Alternativa sin sudo — exportar la ruta de Homebrew directa:
+
+   ```bash
+   export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
+   ```
+
+   Verificá con `"$JAVA_HOME/bin/java" -version`. Sin `JAVA_HOME`,
+   `./gradlew` falla con `Unable to locate a Java Runtime`.
 3. **Antes de clase, corré la demo completa una vez.** Así la imagen de
    PostgreSQL ya queda descargada y Gradle deja las dependencias en caché
    (la primera corrida tarda ~2 min bajando todo; después, segundos).
